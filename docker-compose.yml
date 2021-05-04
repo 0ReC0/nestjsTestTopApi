@@ -28,7 +28,7 @@ services:
     env_file: .env
     environment:
       SERVICE_NAME: top-api
-      SERVICE_DB_HOST: ${DATABASE_HOST}:${DATABASE_PORT}
+      SERVICE_DB_HOST: mongo:${DATABASE_PORT}
       SERVICE_DB_USER: ${DATABASE_USERNAME}
       SERVICE_DB_PASSWORD: ${DATABASE_PASSWORD}
     # save (persist) data and also to share data between containers
