@@ -1,14 +1,73 @@
 version: '3.8'
+# all the containers have to declare inside services
 services:
-  mongo:
-    image: mongo
-    container_name: mongo
+  # App service
+  top-api:
+    # application rely on database running
+    depends_on:
+      - mongo
+    # this build context will take the commands from Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image name
+    image: top-api-demo-docker
+    # container name
+    container_name: top-api
+    # always restart the container if it stops.
     restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin
+    # docker run -t is allow
+    tty: true
+    # application port, this is take value from env file
     ports:
-      - 27017:27017
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    # working directory
+    working_dir: /var/www/top-api-demo
+    # application environment
+
+    env_file: .env
+    environment:
+      SERVICE_NAME: top-api
+      SERVICE_DB_HOST: ${DATABASE_HOST}:${DATABASE_PORT}
+      SERVICE_DB_USER: ${DATABASE_USERNAME}
+      SERVICE_DB_PASSWORD: ${DATABASE_PASSWORD}
+    # save (persist) data and also to share data between containers
     volumes:
-      - ./mongo-data:/data/db
+      - ./:/var/www/top-api-demo
+      - /var/www/top-api-demo/node_modules
+    # application network, each container for a service joins this network
+    networks:
+      - top-api-demo-network
+  # Database service
+  mongo:
+    # pull image from docker hub
+    image: mongo
+    # container name
+    container_name: mongo
+    # always restart the container if it stops.
+    restart: always
+    # database credentials, this is take value from env file
+    env_file: .env
+    environment:
+      MONGO_INITDB_ROOT_DATABASE: ${DATABASE_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    # save (persist) data and also to share data between containers
+    volumes:
+      - db_data:/data/db
+    # database port
+    ports:
+      - "${DATABASE_PORT}:${DATABASE_PORT}"
+    # application network, each container for a service joins this network
+    networks:
+      - top-api-demo-network
     command: --wiredTigerCacheSizeGB 1.5
+
+#Docker Networks
+networks:
+  # All container connect in a network
+  top-api-demo-network:
+    driver: bridge
+# save (persist) data
+volumes:
+  db_data: {}
